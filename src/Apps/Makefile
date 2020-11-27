@@ -32,6 +32,7 @@ TGT_BASE =  gevgen          \
             gntpc           \
             gpdfcomp        \
             gsfcomp         \
+            gevgen_bdx      \
             gmkhedissf
 
 ifeq ($(strip $(GOPT_ENABLE_FNAL)),YES)
@@ -111,6 +112,12 @@ $(GENIE_BIN_PATH)/gevgen_t2k: gT2KEvGen.o $(call find_libs,gevgen_t2k)
 #	@echo "For historical purposes, add symbolic link to the T2K event generation app"
 #	ln -sf $(GENIE_BIN_PATH)/gevgen_t2k $(GENIE_BIN_PATH)/gT2Kevgen
 
+
+#BDX app
+$(GENIE_BIN_PATH)/gevgen_bdx: gBDXExptEvGen.o $(call find_libs,gevgen_bdxl)
+	@echo "** Building gevgen_bdx"
+	$(LD) $(LDFLAGS) gBDXExptEvGen.o $(LIBRARIES) -o $(GENIE_BIN_PATH)/gevgen_bdx
+	
 # atmospheric neutrino event generation app
 #
 $(GENIE_BIN_PATH)/gevgen_atmo: gAtmoEvGen.o $(call find_libs,gevgen_atmo)

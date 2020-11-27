@@ -1,7 +1,7 @@
 //____________________________________________________________________________
 /*!
 
- \class   genie::flux::GCylindTH1Flux
+ \class   genie::flux::GBDXpipesHistoFlux
 
  \brief   A generic GENIE flux driver.
  Generates a 'cylindrical' neutrino beam along the input direction,
@@ -20,8 +20,8 @@
  or see $GENIE/LICENSE
  */
 //____________________________________________________________________________
-#ifndef _G_TH1_CYLICDRICAL_FLUX_H_
-#define _G_TH1_CYLICDRICAL_FLUX_H_
+#ifndef _G_BDX_HISTO_FLUX_H
+#define _G_BDX_HISTO_FLUX_H
 
 #include <string>
 #include <vector>
@@ -29,10 +29,13 @@
 #include <TLorentzVector.h>
 
 #include "Framework/EventGen/GFluxI.h"
+#include "Tools/Flux/GFluxExposureI.h"
+#include "Tools/Flux/GFluxFileConfigI.h"
+#include "Framework/ParticleData/PDGUtils.h"
 
 class TH1D;
-class TF1;
-
+class TH2D;
+class TH3D;
 class TVector3;
 
 using std::string;
@@ -41,18 +44,21 @@ using std::vector;
 namespace genie {
 namespace flux {
 
-class GCylindTH1Flux: public GFluxI {
+class GBDXpipesHistoFlux: public GFluxI, public genie::flux::GFluxExposureI {
+//, public genie::flux::GFluxFileConfigI {
 
 public:
-	GCylindTH1Flux();
-	~GCylindTH1Flux();
+	GBDXpipesHistoFlux();
+	~GBDXpipesHistoFlux();
 
 	// methods specific to this flux object
-	void SetNuDirection(const TVector3 & direction);
 	void SetBeamSpot(const TVector3 & spot);
+	void SetBeamSpotZ(double Zspot);
 	void SetTransverseRadius(double Rt);
-	void AddEnergySpectrum(int nu_pdgc, TH1D * spectrum);
-	void SetRtDependence(string rdep);
+	void SetEnergyRange(double Emin, double Emax);
+	void SetEmin(double Emin);
+	void SetEmax(double Emax);
+	void AddEnergySpectrum(int nu_pdgc, TH1D * spectrum1D, TH3D * spectrum3D);
 
 	// methods implementing the GENIE GFluxI interface
 	const PDGCodeList & FluxParticles(void) {
@@ -85,9 +91,12 @@ public:
 	}
 	void Clear(Option_t * opt);
 	void GenerateWeighted(bool gen_weighted);
-	void SetEnergyRange(double Emin, double Emax);
-	void SetEmin(double Emin);
-	void SetEmax(double Emax);
+
+	virtual double GetTotalExposure() const;  ///< GFluxExposureI interface
+	virtual long int NFluxNeutrinos() const;    ///< # of rays generated
+
+	double UsedEOTs(void) const;       ///< # of protons-on-target used
+
 private:
 
 	// private methods
@@ -97,23 +106,33 @@ private:
 	void AddAllFluxes(void);
 	int SelectNeutrino(double Ev);
 	double GeneratePhi(void) const;
-	double GenerateRt(void) const;
 
 	// private data members
 	double fMaxEv;       ///< maximum energy
-	double fMinEv;       ///< minimum energy
+	double fMinEv;      ///<  minimum energy
 	PDGCodeList * fPdgCList;    ///< list of neutrino pdg-codes
 	int fgPdgC;       ///< running generated nu pdg-code
 	TLorentzVector fgP4;         ///< running generated nu 4-momentum
 	TLorentzVector fgX4;         ///< running generated nu 4-position
 	vector<TH1D *> fSpectrum;    ///< flux = f(Ev), 1/neutrino species
+	vector<TH3D *> fSpectrum3D;  ///distrubition of f(R,2pi(1-z),E)
+
+	vector<TH2D **> fSpectrum3D_proj;
+
+
 	TH1D * fTotSpectrum; ///< combined flux = f(Ev)
-	TVector3 * fDirVec;      ///< neutrino direction
+	double fTotNorm;
+
 	TVector3 * fBeamSpot;    ///< beam spot position
 	double fRt;          ///< transverse size of neutrino beam
-	TF1 * fRtDep;       ///< transverse radius dependence
 
 	int fMaxTrials;
+
+	//exposure
+	double    fEffEOTsPerNu;        ///< what a entry is worth ...
+	double    fAccumEOTs;           ///< POTs used so far
+	long int  fNNeutrinos;          ///< number of flux neutrinos thrown so far
+
 };
 
 } // flux namespace

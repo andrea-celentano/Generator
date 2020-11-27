@@ -48,4 +48,6 @@
 
 #pragma link C++ class genie::flux::GFluxDriverFactory;
 
+#pragma link C++ class genie::flux::GBDXpipesHistoFlux;
+
 #endif
