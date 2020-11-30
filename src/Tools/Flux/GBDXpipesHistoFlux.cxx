@@ -20,6 +20,7 @@
 //____________________________________________________________________________
 #include <cassert>
 #include <algorithm>
+#include <vector>
 
 #include <TH1D.h>
 #include <TH2D.h>
