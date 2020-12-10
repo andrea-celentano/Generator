@@ -1,7 +1,7 @@
 //____________________________________________________________________________
 /*!
 
- \class   genie::flux::GBDXpipesHistoFlux
+ \class   genie::flux::GBDXpipesHistoFlux_DM
 
  \brief   A generic GENIE flux driver.
  Generates a 'cylindrical' neutrino beam along the input direction,
@@ -35,7 +35,7 @@
 
 class TH1D;
 class TH2D;
-class TH3D;
+class TH2D;
 class TVector3;
 
 using std::string;
@@ -44,31 +44,31 @@ using std::vector;
 namespace genie {
 namespace flux {
 
-class GBDXpipesHistoFlux: public GFluxI, public genie::flux::GFluxExposureI {
+class GBDXpipesHistoFlux_DM: public GFluxI, public genie::flux::GFluxExposureI {
 //, public genie::flux::GFluxFileConfigI {
 
 public:
-	GBDXpipesHistoFlux();
-	~GBDXpipesHistoFlux();
+	GBDXpipesHistoFlux_DM();
+	~GBDXpipesHistoFlux_DM();
 
 	// methods specific to this flux object
 	void SetBeamSpot(const TVector3 & spot);
 	void SetBeamSpotZ(double Zspot);
-	void SetTransverseRadius(double Rt);
+
 	void SetEnergyRange(double Emin, double Emax);
 	void SetEmin(double Emin);
 	void SetEmax(double Emax);
-	void AddEnergySpectrum(int nu_pdgc, TH1D * spectrum1D, TH3D * spectrum3D);
+	void AddEnergySpectrum(int dm_pdgc, TH1D * spectrum1D, TH2D * spectrum2D);
 
 	// methods implementing the GENIE GFluxI interface
 	const PDGCodeList & FluxParticles(void) {
 		return *fPdgCList;
 	}
 	double MaxEnergy(void) {
-		return fMaxEv;
+		return fMaxE;
 	}
 	double MinEnergy(void) {
-		return fMinEv;
+		return fMinE;
 	}
 	bool GenerateNext(void);
 	int PdgCode(void) {
@@ -104,34 +104,33 @@ private:
 	void CleanUp(void);
 	void ResetSelection(void);
 	void AddAllFluxes(void);
-	int SelectNeutrino(double Ev);
+	int SelectDM(double E);
 	double GeneratePhi(void) const;
 
 	// private data members
-	double fMaxEv;       ///< maximum energy
-	double fMinEv;      ///<  minimum energy
-	PDGCodeList * fPdgCList;    ///< list of neutrino pdg-codes
-	int fgPdgC;       ///< running generated nu pdg-code
-	TLorentzVector fgP4;         ///< running generated nu 4-momentum
-	TLorentzVector fgX4;         ///< running generated nu 4-position
-	vector<TH1D *> fSpectrum;    ///< flux = f(Ev), 1/neutrino species
-	vector<TH3D *> fSpectrum3D;  ///distrubition of f(R,2pi(1-z),E)
+	double fMaxE;       ///< maximum energy
+	double fMinE;      ///<  minimum energy
+	PDGCodeList * fPdgCList;    ///< list of DM pdg-codes
+	int fgPdgC;       ///< running generated DM pdg-code
+	TLorentzVector fgP4;         ///< running generated DM 4-momentum
+	TLorentzVector fgX4;         ///< running generated DM 4-position
+	std::vector<TH1D *> fSpectrum;    ///< flux = f(E), 1/DM species
+	std::vector<TH2D *> fSpectrum2D;  ///distrubition of f(2pi(1-z),E)
 
-	vector<TH2D **> fSpectrum3D_proj;
+	std::vector<TH1D **> fSpectrum2D_proj;
 
 
-	TH1D * fTotSpectrum; ///< combined flux = f(Ev)
+	TH1D * fTotSpectrum; ///< combined flux = f(E)
 	double fTotNorm;
 
 	TVector3 * fBeamSpot;    ///< beam spot position
-	double fRt;          ///< transverse size of neutrino beam
 
 	int fMaxTrials;
 
 	//exposure
-	double    fEffEOTsPerNu;        ///< what a entry is worth ...
+	double    fEffEOTsPerDM;        ///< what a entry is worth ...
 	double    fAccumEOTs;           ///< EOTs used so far
-	long int  fNNeutrinos;          ///< number of flux neutrinos thrown so far
+	long int  fNDM;          ///< number of flux DM thrown so far
 
 };
 

@@ -72,7 +72,7 @@ double DMElectronPXSec::XSec(
   double MZ2 = TMath::Power(fMedMass,2);
   double A  = fgZp4 * TMath::Power(Ev,3) * me / (4.0 * kPi * (Ev2 - ml2) * TMath::Power(MZ2 + 2.0*Ev*me*(1.0 - y),2));
 
-  //  y = 1 - me/Ev - y; // FSPL = electron. XSec below are expressed in Marciano's y!
+  //  y = 1 - me/Ev - y; // FSPL = electron. XSec below are expressed in x!
   //  if(y > 1/(1+0.5*me/Ev)) return 0;
   //  if(y < 0) return 0;
 
@@ -185,7 +185,7 @@ void DMElectronPXSec::LoadConfig(void)
   GetParam("ElectronRightCharge", fQeR);
 
   fgZp4 = TMath::Power(gZp, 4);
-  
+
   // Mediator mass
   fMedMass = PDGLibrary::Instance()->Find(kPdgMediator)->Mass();
 

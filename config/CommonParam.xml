@@ -300,21 +300,33 @@ Or changing the name of this parameter set
     <!--
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         Set the coupling of dark matter to nucleons
+ 
+ 	A.C. on 30/11/2020
+ 	
+ 	I am setting the following parameters to reproduce the minimal DarkPhoton model, with epsilon=3.87E-4 and alphaD=0.1 (gd=1.121)
+ 	 
+ 	To do so, by looking in the code: 
+ 	Zpcoupling = 1 
+ 	Each quark L and R charge = quark electric charge *epsilon (attention! e=sqrt(4*PI*alphaEM)=0.30286190)
+ 	DM L and R charge = gd * 1	
+ 	
+ 	-0.0000354956
+ 
     -->
-    <param type="double" name="ZpCoupling"> 0.1 </param>
-    <param type="double" name="DarkLeftCharge"> 1.0 </param>
-    <param type="double" name="DarkRightCharge"> 1.0 </param>
-    <param type="double" name="DarkScalarCharge"> 1.0 </param> 
-    <param type="double" name="UpLeftCharge"> 1.0 </param>
-    <param type="double" name="UpRightCharge"> 1.0 </param>
-    <param type="double" name="DownLeftCharge"> 1.0 </param>
-    <param type="double" name="DownRightCharge"> 1.0 </param>
-    <param type="double" name="StrangeLeftCharge"> 1.0 </param>
-    <param type="double" name="StrangeRightCharge"> 1.0 </param>
-    <param type="double" name="CharmLeftCharge"> 1.0 </param>
-    <param type="double" name="CharmRightCharge"> 1.0 </param>
-    <param type="double" name="ElectronLeftCharge"> 1.0 </param>
-    <param type="double" name="ElectronRightCharge"> 1.0 </param>
+    <param type="double" name="ZpCoupling"> 1.0 </param>
+    <param type="double" name="DarkLeftCharge"> 1.121 </param>
+    <param type="double" name="DarkRightCharge"> 1.121 </param>
+    <param type="double" name="DarkScalarCharge"> 0.0 </param> 
+    <param type="double" name="UpLeftCharge"> 0.00007814 </param>
+    <param type="double" name="UpRightCharge"> 0.00007814 </param>
+    <param type="double" name="DownLeftCharge"> -0.00003907 </param>
+    <param type="double" name="DownRightCharge"> -0.00003907 </param>
+    <param type="double" name="StrangeLeftCharge"> -0.00003907 </param>
+    <param type="double" name="StrangeRightCharge"> -0.00003907 </param>
+    <param type="double" name="CharmLeftCharge"> 0.00007814 </param>
+    <param type="double" name="CharmRightCharge"> 0.00007814 </param>
+    <param type="double" name="ElectronLeftCharge"> -0.00011720756 </param>
+    <param type="double" name="ElectronRightCharge"> -0.00011720756</param>
     <param type="double" name="DMEL-Mp"> 1.441 </param>
     <param type="double" name="DMEL-Mpi"> 0.1349766 </param>
     <param type="double" name="DMEL-Meta"> 0.547862 </param>

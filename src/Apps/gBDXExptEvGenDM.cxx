@@ -1,40 +1,33 @@
 //______________________________________________________________________________
 /*!
 
- \program gevgen_bdx
+ \program gevgen_lardm
 
- \brief   A GENIE event generation driver `customized' for BDX
-
- See below for further details.
-
- Users should note that the generic GENIE event generation driver
- (gevgen) may still be a more appropriate tool to use for the simpler
- event generation casesrequired for many 4-vector level / systematic
- studies.
- Please see the GENIE documentation (http://www.genie-mc.org) and
- contact me <costas.andreopoulos \at stfc.ac.uk> if in doubt.
+ \brief   A GENIE event generation driver `customized' for the FNAL neutrino
+ experiments using flux drivers for file types used by those expts.
+ This program was adapted from gevgen_t2k used at T2K.
 
  *** Synopsis :
 
- gevgen_bdx [-h]
+ gevgen_lardm [-h]
  [-r run#]
  -f flux
  -g geometry
- [-R radius]
+ -M dm mass
+ [-c zp_coupling]
+ [-v med_ratio]
  [-t top_volume_name_at_geom || -t +Vol1-Vol2...]
  [-m max_path_lengths_xml_file]
  [-L length_units_at_geom]
  [-D density_units_at_geom]
- [-e min,max energy range]
  [-n n_of_events]
- [-x exposure_in_EOTs]
  [-o output_event_file_prefix]
  [-F fid_cut_string]
  [-S nrays]
  [-z zmin]
  [-d debug flags]
  [--seed random_number_seed]
- --cross-sections xml_file
+ [ --cross-sections xml_file]
  [--event-generator-list list_name]
  [--tune genie_tune]
  [--message-thresholds xml_file]
@@ -48,7 +41,7 @@
  [] Denotes an optional argument
 
  -h
- Prints out the gevgen_bdx syntax and exits.
+ Prints out the gevgen_lardm syntax and exits.
  -r
  Specifies the MC run number [default: 1000]
  -g
@@ -71,6 +64,11 @@
  '-g 1000080160[0.95],1000010010[0.05]'
  - To use a target which is 100% C12, type:
  '-g 1000060120'
+ -M
+ Specifies the DM mass
+ -c
+ Specifies the Z' coupling constant
+ Default: Value in UserPhysicsOptions.xml
  -t
  Input 'top volume' for event generation -
  can be used to force event generation in given sub-detector.
@@ -101,104 +99,55 @@
  Input geometry density units, eg "g_cm3", "clhep_def_density_unit",...
  [default: g_cm3]
  -f
- Input 'neutrino flux'.
+ Input 'DM flux'.
  This option can be used to specify any of:
  1 > A set of histograms stored in a ROOT file.
  The general syntax is:
  -f /path/histogram_file.root,neutrino_code[histo_name],...
  [Notes]
- - The neutrino codes are the PDG ones.
- - The 'neutrino_code[histogram_name]' part of the option can
+ - The DM codes are:
+ - For the minimal DM model, leptonic DM
+ ---> CHI:2000010000
+ ---> CHI-BAR: -2000010000
+
+ - The 'DM_code[histogram_name]' part of the option can
  be repeated multiple times (separated by commas), once for
- each flux neutrino species you want to consider, eg
- '-f somefile.root,12[nuehst],-12[nuebarhst],14[numuhst]'
- Note that, if a histogram "histo_name" is used, then also the histogram "histo_name3D" should be present,
- where the 1D histogram is differential in energy, and the 3D histogram is the distribution in R(cm),z,E(GeV),
- where z=2*pi*(1-cos(theta))
+ each flux DM species you want to consider, eg
+ '-f somefile.root,611[chi_histo],-611[chibar_histo]'
+ Note that, if a histogram "histo_name" is used, then also the histogram "histo_name2D" should be present,
+ where the 1D histogram is differential in energy, and the 2D histogram is the distribution in z,E(GeV),
+ where z=sin(theta)
 
  2 > A set of DEFAUL histograms stored in a ROOT file.
  The The general syntax is:
- -f /path/histogram_file.root,DEFAULT,neutrino_code
+ -f /path/histogram_file.root,DEFAULT,DM_code
  [Notes]
- - The neutrino codes are the PDG ones.
- - The 'neutrino_code[histogram_name]' part of the option can
+ - The DM codes are the PDG are as before
+ - The 'DM_code[histogram_name]' part of the option can
  be repeated multiple times (separated by commas), once for
  each flux neutrino species you want to consider, eg
- '-f somefile.root,DEFAULT,12,-12,14,-14'
-
- Default naming is:
-
- hNuMuSpectrum
- hNuMuBarSpectrum
- hNuESpectrum
- hNuESpectrum3D
-
- Note that, if a histogram "histo_name" is used, then also the histogram "histo_name3D" should be present,
- where the 1D histogram is differential in energy, and the 3D histogram is the distribution in R(cm),z,E(GeV),
- where z=2*pi*(1-cos(theta))
+ '-f somefile.root,DEFAULT,2000010000,-2000010000'
 
 
-
-
-
- See the -g option for possible geometry settings.
- If you want to use the detailed detector geometry
- description then you should be using a driver that
- supplies a detailed simulated beam flux.
- - When using flux from histograms there is no branch with
- neutrino parent information added in the output event
- tree as your flux input contains no such information.
- - Note that the relative normalization of the flux histograms
- is taken into account and is reflected in the relative
- frequency of flux neutrinos thrown by the flux driver
- [Examples]
- - To use the histogram 'h100' (representing the nu_mu flux)
- and the histogram 'h300' (representing the nu_e flux) and
- the histogram 'h301' (representing the nu_e_bar flux) from
- the flux.root file in /path/ type:
- '-f /path/flux.root,14[h100],12[h300],-12[h301]
-
- -R radius
- Specify the maximum radius (in cm) for the extraction. Make sure you know what you are doing!
-
- -e min,max
- Specifiy the minimum and the maximum neutrino energy (in GeV)
- If not set, using histogram range.
- If one wants to ignore min, use -e ,max
- If one wants to ignore max, use -e min,
- Comma is MANDATORY
-
- -x
- Specifies how many EOTs to generate.
 
  -n
  Specifies how many events to generate.
-
- -------
- [Note on exposure / statistics]
- Both -x and -n options can be used to set the exposure. Only one can be used at once.
- -------
 
  -F
  Apply a fiducial cut (for now hard coded ... generalize)
  Only used with ROOTGeomAnalyzer
  if string starts with "-" then reverses sense (ie. anti-fiducial)
-
  -S
  Number of rays to use to scan geometry for max path length
- Only used with ROOTGeomAnalyzer & { GNuMIFlux, GSimpleNtpFlux, GDk2NuFlux }
-
+ Only used with ROOTGeomAnalyzer & GNuMIFlux
  +N  Use flux to scan geometry for max path length
-
  -N  Use N rays x N points on each face of a box
-
  -z
- Z from which to start flux ray in user world coordinates. Only use with ROOTGeomAnalyzer.
- Same units as in the geometry file.
- Can also use -z DEFAULT for z=-50 cm
+ Z from which to start flux ray in user world coordinates
+ Only use with ROOTGeomAnalyzer & GNuMIFlux
+ If left unset then flux originates on the flux window
  [No longer attempts to determine z from geometry, generally
  got this wrong]
-
  -o
  Sets the prefix of the output event file.
  The output filename is built as:
@@ -206,42 +155,34 @@
  The default output filename is:
  gntp.[run_number].ghep.root
  This cmd line arguments lets you override 'gntp'
-
  --seed
  Random number seed.
-
  --cross-sections
  Name (incl. full path) of an XML file with pre-computed
  cross-section values used for constructing splines.
-
  --tune
  Specifies a GENIE comprehensive neutrino interaction model tune.
  [default: "Default"].
-
  --message-thresholds
  Allows users to customize the message stream thresholds.
  The thresholds are specified using an XML file.
  See $GENIE/config/Messenger.xml for the XML schema.
-
  --unphysical-event-mask
  Allows users to specify a 16-bit mask to allow certain types of
  unphysical events to be written in the output file.
  [default: all unphysical events are rejected]
-
  --event-record-print-level
  Allows users to set the level of information shown when the event
  record is printed in the screen. See GHepRecord::Print().
-
  --mc-job-status-refresh-rate
  Allows users to customize the refresh rate of the status file.
-
  --cache-file
  Allows users to specify a cache file so that the cache can be
  re-used in subsequent MC jobs.
 
  *** Examples:
 
- (1) shell% gevgen_bdx
+ (1) shell% gevgen_lardm
  -r 1001
  -f /data/mc_inputs/flux/flux_00001.root,MINOS-NearDet,12,-12
  -g /data/mc_inputs/geom/minos.root
@@ -249,16 +190,16 @@
  -e 5E+17
  --cross-sections /data/xsec.xml
 
- Generate events (run number 1001) using the flux ntuple in
+ Generate events (run number 1001) using the gNuMI flux ntuple in
  /data/mc_inputs/flux/v1/flux_00001.root
  The job will load the MINOS near detector detector geometry
  description from /data/mc_inputs/geom/minos.root and interpret it
  using 'mm' as the length unit and 'g/cm^3' as the density unit.
  The job will stop as it accumulates a sample corresponding to
- 5E+17 EOT.
+ 5E+17 POT.
  Pre-computed cross-section data are loaded from /data/xsec.xml
 
- (2) shell% gevgen_bdx
+ (2) shell% gevgen_lardm
  -r 1001
  -f /data/t2k/flux/hst/flux.root,12[h100],-12[h101],14[h200]
  -g 1000080160[0.95],1000010010[0.05]
@@ -267,40 +208,45 @@
 
  Please read the GENIE user manual for more information.
 
- \author  Costas Andreopoulos <costas.andreopoulos \at stfc.ac.uk>
- University of Liverpool & STFC Rutherford Appleton Lab
+ \author  Costas Andreopoulos <constantinos.andreopoulos \at cern.ch>
+ University of Liverpool & STFC Rutherford Appleton Laboratory
 
- Robert Hatcher <rhatcher \at bdx.gov>
+ Robert Hatcher <rhatcher \at fnal.gov>
  Fermi National Accelerator Laboratory
 
  \created August 20, 2008
 
- \cpright Copyright (c) 2003-2019, The GENIE Collaboration
+ \cpright Copyright (c) 2003-2020, The GENIE Collaboration
  For the full text of the license visit http://copyright.genie-mc.org
- or see $GENIE/LICENSE
+
  */
 //_________________________________________________________________________________________
+
+#include <string>
 #include <cassert>
 #include <cstdlib>
 #include <csignal>
 
-#include <string>
+
 #include <sstream>
 #include <vector>
 #include <map>
 #include <algorithm>  // for transform()
 #include <fstream>
+#include <iostream> //A.C.
 
 #include <TSystem.h>
 #include <TError.h>  // for gErrorIgnoreLevel
 #include <TTree.h>
 #include <TFile.h>
 #include <TH1D.h>
-#include <TH3D.h>
+#include <TH2D.h>
 #include <TMath.h>
 #include <TGeoVolume.h>
 #include <TGeoShape.h>
 
+
+#include "Framework/Algorithm/AlgConfigPool.h"
 #include "Framework/Conventions/Units.h"
 #include "Framework/EventGen/EventRecord.h"
 #include "Framework/EventGen/GFluxI.h"
@@ -326,8 +272,17 @@
 #include "Tools/Flux/GFluxDriverFactory.h"
 #include "Tools/Flux/GCylindTH1Flux.h"
 #include "Tools/Flux/GFluxFileConfigI.h"
-#include "Tools/Flux/GFluxExposureI.h"
-#include "Tools/Flux/GBDXpipesHistoFlux.h"
+#include "Tools/Flux/GBDXpipesHistoFlux_DM.h"
+
+//#include "Tools/Flux/GNuMIFlux.h"
+//#include "Tools/Flux/GSimpleNtpFlux.h"
+//  #ifdef __DK2NU_FLUX_DRIVER_AVAILABLE__
+//    #include "dk2nu/tree/dk2nu.h"
+//    #include "dk2nu/tree/dkmeta.h"
+//    #include "dk2nu/tree/NuChoice.h"
+//    #include "dk2nu/genie/GDk2NuFlux.h"
+//  #endif
+
 #endif
 
 #ifdef __GENIE_GEOM_DRIVERS_ENABLED__
@@ -338,12 +293,14 @@
 #include "Tools/Geometry/GeomVolSelectorRockBox.h"
 #endif
 
-using std::string;
-using std::vector;
-using std::map;
-using std::ostringstream;
+using namespace std;
+//using std::string;
+//using std::vector;
+//using std::map;
+//using std::ostringstream;
 
 using namespace genie;
+
 
 // Forward function declarations
 //
@@ -354,10 +311,10 @@ void CreateFidSelection(string fidcut, GeomAnalyzerI *geom_driver);
 void CreateRockBoxSelection(string fidcut, GeomAnalyzerI *geom_driver);
 void DetermineFluxDriver(string fopt);
 void ParseFluxHst(string fopt);
-void ParseFluxHst3D(string fopt);
+void ParseFluxHst2D(string fopt);
+
 // Default options (override them using the command line arguments):
 //
-//string kDefOptGeomLUnits = "mm";    // default geometry length units
 string kDefOptGeomLUnits = "cm";    // default geometry length units
 string kDefOptGeomDUnits = "g_cm3"; // default geometry density units
 NtpMCFormat_t kDefOptNtpFormat = kNFGHEP; // default event tree format
@@ -365,21 +322,24 @@ string kDefOptEvFilePrefix = "gntp";
 
 // User-specified options:
 //
-double gOptNuEnergyMin = -1;     // neutrino minimum energy to consider
-double gOptNuEnergyMax = -1;     // neutrino maximum energy to consider
 
-double gOptRadiusMax = -1;
+double gOptDMEnergyMin = -1;     // neutrino minimum energy to consider
+double gOptDMEnergyMax = -1;     // neutrino maximum energy to consider
 
+string gOptFluxDriver = "";           // flux driver class to use
+bool gOptUsingHistFlux = false;     // using beam flux ntuples or flux from histograms?
+
+PDGCodeList gOptFluxPdg;                   // list of DM flavors to accept
+map<int, TH1D*> gOptFluxHst;                   // flux histos (DM pdg  -> spectrum)  / if not using beam sim ntuples
+map<int, TH2D*> gOptFluxHst2D;
+
+double gOptZpCoupling;                // mediator coupling
+double gOptDMMass;                    // DM Mass
+double gOptMedRatio;                  // ratio of mediator to DM mass
 Long_t gOptRunNu;                     // run number
 bool gOptUsingRootGeom = false;     // using root geom or target mix?
-bool gOptUsingHistFlux = false;     // using beam flux ntuples or flux from histograms?
-string gOptFluxDriver = "";           // flux driver class to use
-
-PDGCodeList gOptFluxPdg;                   // list of neutrino flavors to accept
 map<int, double> gOptTgtMix;                    // target mix  (tgt pdg -> wght frac) / if not using detailed root geom
-map<int, TH1D*> gOptFluxHst;                   // flux histos (nu pdg  -> spectrum)  / if not using beam sim ntuples
-map<int, TH3D*> gOptFluxHst3D;
-string gOptRootGeom;                  // input gdml file with realistic detector geometry
+string gOptRootGeom;                  // input ROOT file with realistic detector geometry
 string gOptRootGeomTopVol = "";       // input geometry top event generation volume
 string gOptRootGeomMasterVol = "";    // (highest level of geometry)
 double gOptGeomLUnits = 0;            // input geometry length units
@@ -387,14 +347,12 @@ double gOptGeomDUnits = 0;            // input geometry density units
 string gOptExtMaxPlXml = "";          // max path lengths XML file for input geometry
 bool gOptWriteMaxPlXml = false;     // rather than read file, write the file
 //   triggered by leading '+' on given ofilename
-string gOptFluxFile;                  // ROOT file with beam flux ntuple
-string gOptDetectorLocation;          // detector location (see GNuMIFlux.xml for supported locations))
+string gOptFluxFile;                  // ROOT file with gnumi beam flux ntuple
 int gOptNev;                       // number of events to generate
-double gOptEOT;                       // exposure (in EOT)
 string gOptFidCut;                    // fiducial cut selection
 int gOptNScan = 0;                 // # of geometry scan rays
 double gOptZmin = 0;            // starting z position [ if abs() < 1e30 ]
-double gOptZmin_DEFAULT = -50;  //default value in cm
+double gOptZmin_DEFAULT = -2541;  //default value in cm, it is the distance between the detector (here located at 0,0,0) and the dump
 string gOptEvFilePrefix;              // event file prefix
 int gOptDebug = 0;                 // debug flags
 long int gOptRanSeed;                   // random number seed
@@ -411,6 +369,13 @@ static void gsSIGTERMhandler(int /* s */) {
 int main(int argc, char **argv) {
 	LoadExtraOptions();
 	GetCommandLineArgs(argc, argv);
+	PDGLibrary::Instance()->AddDarkMatter(gOptDMMass, gOptMedRatio);
+	if (gOptZpCoupling > 0.) {
+		Registry *r = AlgConfigPool::Instance()->CommonList("Param", "BoostedDarkMatter");
+		r->UnLock();
+		r->Set("ZpCoupling", gOptZpCoupling);
+		r->Lock();
+	}
 
 	if (!RunOpt::Instance()->Tune()) {
 		LOG("gmkspl", pFATAL) << " No TuneId in RunOption";
@@ -444,7 +409,7 @@ int main(int argc, char **argv) {
 
 		TGeoVolume *topvol = rgeom->GetGeometry()->GetTopVolume();
 		if (!topvol) {
-			LOG("gevgen_bdx", pFATAL) << "Null top ROOT geometry volume!";
+			LOG("gevgen_numi", pFATAL) << "Null top ROOT geometry volume!";
 			exit(1);
 		}
 		// retrieve the master volume name
@@ -506,16 +471,17 @@ int main(int argc, char **argv) {
 		std::vector<std::string>::const_iterator itr = known.begin();
 		for (; itr != known.end(); ++itr)
 			s << "  " << (*itr) << "\n";
-		LOG("gevgen_bdx", pFATAL) << "Failed to get any flux driver from GFluxDriverFactory\n" << "when using \"" << gOptFluxDriver << "\"\n" << s.str();
+		LOG("gevgen_dm_bdx", pFATAL) << "Failed to get any flux driver from GFluxDriverFactory\n" << "when using \"" << gOptFluxDriver << "\"\n" << s.str();
 		exit(1);
 	}
+
 
 	//
 	// *** Using fluxes from histograms (for all specified neutrino species)
 	//
 	//Using precise geometry
 	if (gOptUsingRootGeom) {
-		genie::flux::GBDXpipesHistoFlux *hist_flux_driver = dynamic_cast<genie::flux::GBDXpipesHistoFlux*>(flux_driver);
+		genie::flux::GBDXpipesHistoFlux_DM *hist_flux_driver = dynamic_cast<genie::flux::GBDXpipesHistoFlux_DM*>(flux_driver);
 		if (!hist_flux_driver) {
 			LOG("gevgen_bdx", pFATAL) << "Failed to get GBDXpipesHistoFlux driver from GFluxDriverFactory\n" << "when using " << gOptFluxDriver;
 			exit(1);
@@ -524,19 +490,18 @@ int main(int argc, char **argv) {
 		for (; it != gOptFluxHst.end(); ++it) {
 			int pdg_code = it->first;
 			TH1D *spectrum = it->second;
-			TH3D *spectrum3D = gOptFluxHst3D[pdg_code];
-			hist_flux_driver->AddEnergySpectrum(pdg_code, spectrum, spectrum3D);
+			TH2D *spectrum2D = gOptFluxHst2D[pdg_code];
+			hist_flux_driver->AddEnergySpectrum(pdg_code, spectrum, spectrum2D);
 			// once the histogram has been added to the GCylindTH1Flux driver
 			// it is owned by the driver and it is up to the the driver
 			// to clean up (i.e. delete it).
 			// remove it from this map to avoid double deletion.
 			it->second = 0;
-			gOptFluxHst3D[pdg_code] = 0;
+			gOptFluxHst2D[pdg_code] = 0;
 		}
 		hist_flux_driver->SetBeamSpotZ(gOptZmin);  // was "zmin" from bounding_box
-		if (gOptNuEnergyMin > 0) hist_flux_driver->SetEmin(gOptNuEnergyMin);
-		if (gOptNuEnergyMax > 0) hist_flux_driver->SetEmax(gOptNuEnergyMax);
-		hist_flux_driver->SetTransverseRadius(gOptRadiusMax);
+		if (gOptDMEnergyMin > 0) hist_flux_driver->SetEmin(gOptDMEnergyMin);
+		if (gOptDMEnergyMax > 0) hist_flux_driver->SetEmax(gOptDMEnergyMax);
 	}
 	//Using simple geoemtry
 	else {
@@ -550,7 +515,6 @@ int main(int argc, char **argv) {
 
 		hist_flux_driver->SetNuDirection(bdir);
 		hist_flux_driver->SetBeamSpot(bspot);
-		hist_flux_driver->SetTransverseRadius(gOptRadiusMax);
 		map<int, TH1D*>::iterator it = gOptFluxHst.begin();
 		for (; it != gOptFluxHst.end(); ++it) {
 			int pdg_code = it->first;
@@ -563,8 +527,8 @@ int main(int argc, char **argv) {
 			it->second = 0;
 		}
 
-		if (gOptNuEnergyMin > 0) hist_flux_driver->SetEmin(gOptNuEnergyMin);
-		if (gOptNuEnergyMax > 0) hist_flux_driver->SetEmax(gOptNuEnergyMax);
+		if (gOptDMEnergyMin > 0) hist_flux_driver->SetEmin(gOptDMEnergyMin);
+		if (gOptDMEnergyMax > 0) hist_flux_driver->SetEmax(gOptDMEnergyMax);
 
 	}
 
@@ -572,11 +536,17 @@ int main(int argc, char **argv) {
 	genie::flux::GFluxExposureI *fluxExposureI = dynamic_cast<genie::flux::GFluxExposureI*>(flux_driver);
 	genie::flux::GFluxFileConfigI *fluxFileConfigI = dynamic_cast<genie::flux::GFluxFileConfigI*>(flux_driver);
 
+	/*
+	 PDGCodeList dm_pdg;
+	 dm_pdg.push_back(kPdgDarkMatter);
+	 fluxFileConfigI->SetFluxParticles(dm_pdg);*/
+
+
 	// *************************************************************************
 	// * Handle chicken/egg problem: geom analyzer vs. flux.
 	// * Need both at this point change geom scan defaults.
 	// *************************************************************************
-	if (gOptUsingRootGeom && !gOptUsingHistFlux) {
+	if (gOptUsingRootGeom) {
 
 		geometry::ROOTGeomAnalyzer *rgeom = dynamic_cast<geometry::ROOTGeomAnalyzer*>(geom_driver);
 		if (!rgeom) assert(0);
@@ -585,12 +555,12 @@ int main(int argc, char **argv) {
 
 		// even if user doesn't specify gOptNScan configure to scan using flux
 		if (gOptNScan >= 0) {
-			LOG("gevgen_bdx", pNOTICE) << "Using ROOTGeomAnalyzer: geom scan using flux: nparticles=" << gOptNScan;
+			LOG("gevgen_dm_bdx", pNOTICE) << "Using ROOTGeomAnalyzer: geom scan using flux: nparticles=" << gOptNScan;
 			rgeom->SetScannerFlux(flux_driver);
 			if (gOptNScan > 0) rgeom->SetScannerNParticles(gOptNScan);
 		} else {
 			int nabs = TMath::Abs(gOptNScan);
-			LOG("gevgen_bdx", pNOTICE) << "Using ROOTGeomAnalyzer: geom scan using box: npoints=nrays=" << nabs;
+			LOG("gevgen_dm_bdx", pNOTICE) << "Using ROOTGeomAnalyzer: geom scan using box: npoints=nrays=" << nabs;
 			rgeom->SetScannerNPoints(nabs);
 			rgeom->SetScannerNRays(nabs);
 		}
@@ -618,8 +588,8 @@ int main(int argc, char **argv) {
 			maxpath.SaveAsXml(maxplfile);
 			// append extra info to file
 			std::ofstream mpfile(maxplfile.c_str(), std::ios_base::app);
-			mpfile << std::endl << "<!-- this file is only relevant for a setup compatible with:" << std::endl << "geom: " << gOptRootGeom << " top: \"" << gOptRootGeomTopVol << "\"" << std::endl << "flux: " << gOptFluxFile << std::endl << "location: " << gOptDetectorLocation << std::endl << "fidcut: " << gOptFidCut << std::endl << "nscan: "
-					<< gOptNScan << " (0>= use flux, <0 use box |nscan| points/rays)" << std::endl << "zmin: " << gOptZmin << " (if |zmin| > 1e30, leave ray on flux window)" << std::endl << "-->" << std::endl;
+			mpfile << std::endl << "<!-- this file is only relevant for a setup compatible with:" << std::endl << "geom: " << gOptRootGeom << " top: \"" << gOptRootGeomTopVol << "\"" << std::endl << "flux: " << gOptFluxFile << std::endl << "fidcut: " << gOptFidCut << std::endl << "nscan: " << gOptNScan
+					<< " (0>= use flux, <0 use box |nscan| points/rays)" << std::endl << "zmin: " << gOptZmin << " (if |zmin| > 1e30, leave ray on flux window)" << std::endl << "-->" << std::endl;
 			mpfile.close();
 		}
 	}
@@ -646,7 +616,7 @@ int main(int argc, char **argv) {
 		size_t nc = branchClassNames.size();
 		size_t np = branchObjPointers.size();
 		if (nn != nc || nc != np) {
-			LOG("gevgen_bdx", pERROR) << "Inconsistent info back from \"" << gOptFluxDriver << "\" " << "for branch info:  " << nn << " " << nc << " " << np;
+			LOG("gevgen_dm_bdx", pERROR) << "Inconsistent info back from flux driver " << "for branch info:  " << nn << " " << nc << " " << np;
 		} else {
 			for (size_t ii = 0; ii < nn; ++ii) {
 				const char *bname = branchNames[ii].c_str();
@@ -654,7 +624,7 @@ int main(int argc, char **argv) {
 				void **&optr = branchObjPointers[ii];  // note critical '&' !
 				if (!optr || !*optr) continue;  // no pointer supplied, skip it
 				int split = 99;  // 1
-				LOG("gevgen_bdx", pNOTICE) << "Adding extra branch \"" << bname << "\" of type \"" << cname << "\" (" << optr << ") to output tree";
+				LOG("gevgen_dm_bdx", pNOTICE) << "Adding extra branch \"" << bname << "\" of type \"" << cname << "\" (" << optr << ") to output tree";
 				TBranch *bptr = ntpw.EventTree()->Branch(bname, cname, optr, 32000, split);
 				extraBranches.push_back(bptr);
 
@@ -662,7 +632,7 @@ int main(int argc, char **argv) {
 					// don't delete this !!! we're sharing
 					bptr->SetAutoDelete(false);
 				} else {
-					LOG("gevgen_bdx", pERROR) << "FAILED to add extra branch \"" << bname << "\" of type \"" << cname << "\" to output tree";
+					LOG("gevgen_dm_bdx", pERROR) << "FAILED to add extra branch \"" << bname << "\" of type \"" << cname << "\" to output tree";
 				}
 			} // loop over additions
 		} // same # of entries
@@ -681,20 +651,11 @@ int main(int argc, char **argv) {
 
 	int ievent = 0;
 	while (!gSigTERM) {
-		LOG("gevgen_bdx", pINFO) << " *** Generating event............ " << ievent;
+		LOG("gevgen_dm_bdx", pINFO) << " *** Generating event............ " << ievent;
 
 		// In case the required statistics was expressed as 'number of events'
 		// then quit if that number has been generated
 		if (ievent == gOptNev) break;
-
-		// In case the required statistics was expressed as 'number of EOT'
-		// then exit the event loop if the requested EOT has been generated.
-		if (gOptEOT > 0 && fluxExposureI) {
-			double fpot = fluxExposureI->GetTotalExposure(); // current EOTs used
-			double psc = mcj_driver->GlobProbScale();  // interaction prob. scale
-			double pot = fpot / psc;                   // EOTs for generated sample
-			if (pot >= gOptEOT) break;
-		}
 
 		// Generate a single event using neutrinos coming from the specified flux
 		// and hitting the specified geometry or target mix
@@ -703,14 +664,14 @@ int main(int argc, char **argv) {
 		// Check whether a null event was returned due to the flux driver reaching
 		// the end of the input flux ntuple - exit the event generation loop
 		if (!event && flux_driver->End()) {
-			LOG("gevgen_bdx", pWARN) << "** The flux driver read all the input flux entries: End()==true";
+			LOG("gevgen_dm_bdx", pWARN) << "** The flux driver read all the input flux entries: End()==true";
 			break;
 		}
 		if (!event) {
-			LOG("gevgen_bdx", pERROR) << "Got a null generated neutino event! Retrying ...";
+			LOG("gevgen_dm_bdx", pERROR) << "Got a null generated neutino event! Retrying ...";
 			continue;
 		}
-		LOG("gevgen_bdx", pINFO) << "Generated event: " << *event;
+		LOG("gevgen_dm_bdx", pINFO) << "Generated event: " << *event;
 
 		// A valid event was generated: flux info (parent decay/prod
 		// position/kinematics) for that simulated event should already
@@ -738,45 +699,46 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	LOG("gevgen_bdx", pINFO) << "The GENIE MC job is done generating events - Cleaning up & exiting...";
+	LOG("gevgen_dm_bdx", pINFO) << "The GENIE MC job is done generating events - Cleaning up & exiting...";
+
 
 	// *************************************************************************
-	// * Print job statistics &
-	// * calculate normalization factor for the generated sample
-	// *************************************************************************
-	if (gOptUsingRootGeom) {
-		// EOT normalization will only be calculated if event generation was based
-		// on a detailed detector geometry description.
-		// Get nunber of flux neutrinos read-in by flux driver, number of flux
-		// neutrinos actually thrown to the event generation driver and number
-		// of neutrino interactions actually generated
-		long int nflx = 0;
-		long int nflx_evg = mcj_driver->NFluxNeutrinos();
-		double feot = 0;
-		const char *exposureUnits = "(unknown units)";
-		if (fluxExposureI) {
-			feot = fluxExposureI->GetTotalExposure(); // EOTs used so far
-			nflx = fluxExposureI->NFluxNeutrinos();
-			//genie::flux::Exposure_t etype = fluxExposureI->GetExposureType();
-			//exposureUnits = genie::flux::GFluxExposureI::AsString(etype);
-			exposureUnits = fluxExposureI->GetExposureUnits();
-		}
-		if (fluxFileConfigI) {
-			fluxFileConfigI->PrintConfig();
-		}
-		double psc = mcj_driver->GlobProbScale();      // interaction prob. scale
-		if (psc <= 0.0) {
-			LOG("gevgen_bdx", pFATAL) << "MCJobDriver GlobalProbScale was <=0 : " << psc;
-		}
-		double eot = feot / psc;                       // EOT for generated sample
-		long int nev = ievent;
+		// * Print job statistics &
+		// * calculate normalization factor for the generated sample
+		// *************************************************************************
+		if (gOptUsingRootGeom) {
+			// EOT normalization will only be calculated if event generation was based
+			// on a detailed detector geometry description.
+			// Get nunber of flux neutrinos read-in by flux driver, number of flux
+			// neutrinos actually thrown to the event generation driver and number
+			// of neutrino interactions actually generated
+			long int nflx = 0;
+			long int nflx_evg = mcj_driver->NFluxNeutrinos();
+			double feot = 0;
+			const char *exposureUnits = "(unknown units)";
+			if (fluxExposureI) {
+				feot = fluxExposureI->GetTotalExposure(); // EOTs used so far
+				nflx = fluxExposureI->NFluxNeutrinos();
+				//genie::flux::Exposure_t etype = fluxExposureI->GetExposureType();
+				//exposureUnits = genie::flux::GFluxExposureI::AsString(etype);
+				exposureUnits = fluxExposureI->GetExposureUnits();
+			}
+			if (fluxFileConfigI) {
+				fluxFileConfigI->PrintConfig();
+			}
+			double psc = mcj_driver->GlobProbScale();      // interaction prob. scale
+			if (psc <= 0.0) {
+				LOG("gevgen_bdx", pFATAL) << "MCJobDriver GlobalProbScale was <=0 : " << psc;
+			}
+			double eot = feot / psc;                       // EOT for generated sample
+			long int nev = ievent;
 
-		LOG("gevgen_bdx", pNOTICE) << "\n >> Interaction probability scaling factor:  " << psc << "\n >> using: " << gOptFluxDriver << "\n >> N of flux v read-in by flux driver:      " << nflx << "\n >> N of flux v thrown to event gen driver:  " << nflx_evg << "\n >> N of generated v interactions:           " << nev
-				<< "\n ** Normalization for generated sample:      " << eot << " " << exposureUnits << " * detector";
+			LOG("gevgen_bdx", pNOTICE) << "\n >> Interaction probability scaling factor:  " << psc << "\n >> using: " << gOptFluxDriver << "\n >> N of flux v read-in by flux driver:      " << nflx << "\n >> N of flux v thrown to event gen driver:  " << nflx_evg << "\n >> N of generated v interactions:           " << nev
+					<< "\n ** Normalization for generated sample:      " << eot << " " << exposureUnits << " * detector";
 
-		ntpw.EventTree()->SetWeight(eot); // store EOT
+			ntpw.EventTree()->SetWeight(eot); // store EOT
+		}
 
-	}
 
 	// *************************************************************************
 	// * Save & clean-up
@@ -791,14 +753,8 @@ int main(int argc, char **argv) {
 	delete mcj_driver;
 	// this list should only be histograms that have (for some reason)
 	// not been handed over to the GCylindTH1Flux driver.
-	map<int, TH1D*>::iterator it = gOptFluxHst.begin();
-	for (; it != gOptFluxHst.end(); ++it) {
-		TH1D *spectrum = it->second;
-		if (spectrum) delete spectrum;
-	}
-	gOptFluxHst.clear();
 
-	LOG("gevgen_bdx", pNOTICE) << "Done!";
+	LOG("gevgen_dm_bdx", pNOTICE) << "Done!";
 
 	return 0;
 }
@@ -817,6 +773,8 @@ void LoadExtraOptions(void) {
 
 	extraLibs.push_back("libdk2nuTree");
 	extraLibs.push_back("libdk2nuGenie");
+
+	///******* done with fake "read"
 
 	// see if there are any libraries to load
 	// just let ROOT do it ... check error code on return
@@ -841,7 +799,7 @@ void LoadExtraOptions(void) {
 			statWords = "mismatched version";
 		}
 
-		LOG("gevgen_bdx",pNOTICE) << statWords << " (" << loadStatus << ") " << extraLibs[ilib];
+		LOG("gevgen_dm_bdx",pNOTICE) << statWords << " (" << loadStatus << ") " << extraLibs[ilib];
 	}
 	// restore the ROOT error message level
 	gErrorIgnoreLevel = prevErrorLevel;
@@ -850,7 +808,7 @@ void LoadExtraOptions(void) {
 
 //____________________________________________________________________________
 void GetCommandLineArgs(int argc, char **argv) {
-	LOG("gevgen_bdx", pINFO) << "Parsing command line arguments";
+	LOG("gevgen_dm_bdx", pINFO) << "Parsing command line arguments";
 
 	// Common run options. Set defaults and read.
 	RunOpt::Instance()->EnableBareXSecPreCalc(true);
@@ -869,10 +827,10 @@ void GetCommandLineArgs(int argc, char **argv) {
 
 	// run number:
 	if (parser.OptionExists('r')) {
-		LOG("gevgen_bdx", pDEBUG) << "Reading MC run number";
+		LOG("gevgen_dm_bdx", pDEBUG) << "Reading MC run number";
 		gOptRunNu = parser.ArgAsLong('r');
 	} else {
-		LOG("gevgen_bdx", pDEBUG) << "Unspecified run number - Using default";
+		LOG("gevgen_dm_bdx", pDEBUG) << "Unspecified run number - Using default";
 		gOptRunNu = 0;
 	} //-r
 
@@ -882,41 +840,67 @@ void GetCommandLineArgs(int argc, char **argv) {
 
 	string geom = "";
 	string lunits, dunits;
-
-	//this is the first option to check.
 	if (parser.OptionExists('g')) {
-		LOG("gevgen_bdx", pDEBUG) << "Getting input geometry";
+		LOG("gevgen_dm_bdx", pDEBUG) << "Getting input geometry";
 		geom = parser.ArgAsString('g');
 
 		// is it a ROOT file that contains a ROOT geometry?
-		bool accessible_geom_file = !(gSystem->AccessPathName(geom.c_str())); //it returns FALSE if the file is there
+		bool accessible_geom_file = !(gSystem->AccessPathName(geom.c_str()));
 		if (accessible_geom_file) {
 			gOptRootGeom = geom;
 			gOptUsingRootGeom = true;
 		}
 	} else {
-		LOG("gevgen_bdx", pFATAL) << "No geometry option specified - Exiting";
+		LOG("gevgen_dm_bdx", pFATAL) << "No geometry option specified - Exiting";
 		PrintSyntax();
 		exit(1);
 	} //-g
+
+	// dark matter mass
+	if (parser.OptionExists('M')) {
+		LOG("gevgen_dm_bdx", pINFO) << "Reading dark matter mass";
+		gOptDMMass = parser.ArgAsDouble('M');
+	} else {
+		LOG("gevgen_dm_bdx", pFATAL) << "Unspecified dark matter mass - Exiting";
+		PrintSyntax();
+		exit(1);
+	} // -M
+
+	// mediator coupling
+	if (parser.OptionExists('c')) {
+		LOG("gevgen_dm_bdx", pINFO) << "Reading mediator coupling";
+		gOptZpCoupling = parser.ArgAsDouble('c');
+	} else {
+		LOG("gevgen_dm_bdx", pINFO) << "Unspecified mediator coupling - Using value from config file";
+		gOptZpCoupling = -1.;
+	} // -c
+
+	// mediator mass ratio
+	if (parser.OptionExists('v')) {
+		LOG("gevgen_dm_bdx", pINFO) << "Reading mediator mass ratio";
+		gOptMedRatio = parser.ArgAsDouble('v');
+	} else {
+		LOG("gevgen_dm_bdx", pINFO) << "Unspecified mediator mass ratio - Using default";
+		gOptMedRatio = 0.5;
+	} // -v
 
 	if (gOptUsingRootGeom) {
 		// using a ROOT geometry - get requested geometry units
 
 		// legth units:
 		if (parser.OptionExists('L')) {
-			LOG("gevgen_bdx", pDEBUG) << "Checking for input geometry length units";
+			LOG("gevgen_dm_bdx", pDEBUG) << "Checking for input geometry length units";
 			lunits = parser.ArgAsString('L');
 		} else {
-			LOG("gevgen_bdx", pDEBUG) << "Using default geometry length units";
+			LOG("gevgen_dm_bdx", pDEBUG) << "Using default geometry length units";
 			lunits = kDefOptGeomLUnits;
 		} // -L
 		  // density units:
 		if (parser.OptionExists('D')) {
-			LOG("gevgen_bdx", pDEBUG) << "Checking for input geometry density units";
+			LOG("gevgen_dm_bdx", pDEBUG) << "Checking for input geometry density units";
 			dunits = parser.ArgAsString('D');
 		} else {
-			LOG("gevgen_bdx", pDEBUG) << "Using default geometry density units";
+			LOG("gevgen_dm_bdx", pDEBUG) << "Using default geometry density units";
 			dunits = kDefOptGeomDUnits;
 		} // -D
 		gOptGeomLUnits = genie::utils::units::UnitFromString(lunits);
@@ -925,10 +909,10 @@ void GetCommandLineArgs(int argc, char **argv) {
 		// check whether an event generation volume name has been
 		// specified -- default is the 'top volume'
 		if (parser.OptionExists('t')) {
-			LOG("gevgen_bdx", pDEBUG) << "Checking for input volume name";
+			LOG("gevgen_dm_bdx", pDEBUG) << "Checking for input volume name";
 			gOptRootGeomTopVol = parser.ArgAsString('t');
 		} else {
-			LOG("gevgen_bdx", pDEBUG) << "Using the <master volume>";
+			LOG("gevgen_dm_bdx", pDEBUG) << "Using the <master volume>";
 		} // -t
 
 		// check whether an XML file with the maximum (density weighted)
@@ -936,64 +920,63 @@ void GetCommandLineArgs(int argc, char **argv) {
 		// otherwise will compute the max path lengths at job init
 		// if passed name starts with '+', then compute max at job init, but write out the result
 		if (parser.OptionExists('m')) {
-			LOG("gevgen_bdx", pDEBUG) << "Checking for maximum path lengths XML file";
+			LOG("gevgen_dm_bdx", pDEBUG) << "Checking for maximum path lengths XML file";
 			gOptExtMaxPlXml = parser.ArgAsString('m');
 			gOptWriteMaxPlXml = false;
 			if (gOptExtMaxPlXml[0] == '+') {
 				gOptExtMaxPlXml = gOptExtMaxPlXml.substr(1, std::string::npos);
 				gOptWriteMaxPlXml = true;
-				LOG("gevgen_bdx", pINFO) << "Will write maximum path lengths XML file: " << gOptExtMaxPlXml;
+				LOG("gevgen_dm_bdx", pINFO) << "Will write maximum path lengths XML file: " << gOptExtMaxPlXml;
 			}
 		} else {
-			LOG("gevgen_bdx", pDEBUG) << "Will compute the maximum path lengths at job init";
+			LOG("gevgen_dm_bdx", pDEBUG) << "Will compute the maximum path lengths at job init";
 			gOptExtMaxPlXml = "";
 		} // -m
 
 		// fidcut:
 		if (parser.OptionExists('F')) {
-			LOG("gevgen_bdx", pDEBUG) << "Using Fiducial cut?";
+			LOG("gevgen_dm_bdx", pDEBUG) << "Using Fiducial cut?";
 			gOptFidCut = parser.ArgAsString('F');
 		} else {
-			LOG("gevgen_bdx", pDEBUG) << "No fiducial volume cut";
+			LOG("gevgen_dm_bdx", pDEBUG) << "No fiducial volume cut";
 			gOptFidCut = "";
 		} //-F
 
-		if (!gOptUsingHistFlux) {
-			// how to scan the geometry (if relevant)
-			if (parser.OptionExists('S')) {
-				LOG("gevgen_bdx", pDEBUG) << "Reading requested geom scan count";
-				gOptNScan = parser.ArgAsInt('S');
-			} else {
-				LOG("gevgen_bdx", pDEBUG) << "No geom scan count was requested";
-				gOptNScan = 0;
-			} //-S
+		// how to scan the geometry (if relevant)
+		if (parser.OptionExists('S')) {
+			LOG("gevgen_dm_bdx", pDEBUG) << "Reading requested geom scan count";
+			gOptNScan = parser.ArgAsInt('S');
+		} else {
+			LOG("gevgen_dm_bdx", pDEBUG) << "No geom scan count was requested";
+			gOptNScan = 0;
+		} //-S
 
-			// z for flux rays to start
-			if (parser.OptionExists('z')) {
-				LOG("gevgen_bdx", pDEBUG) << "Reading requested zmin";
-				string gOptZmin_str = parser.ArgAsString('z');
-				if (gOptZmin_str == "DEFAULT") {
-					gOptZmin = gOptZmin_DEFAULT;
-					LOG("gevgen_bdx", pDEBUG) << "Set to DEFAULT: " << gOptZmin;
-				} else {
-					gOptZmin = parser.ArgAsDouble('z');
-					LOG("gevgen_bdx", pDEBUG) << "Set to " << gOptZmin;
-				}
+		// z for flux rays to start
+		if (parser.OptionExists('z')) {
+			LOG("gevgen_dm_bdx", pDEBUG) << "Reading requested zmin";
+			string gOptZmin_str = parser.ArgAsString('z');
+			if (gOptZmin_str == "DEFAULT") {
+				gOptZmin = gOptZmin_DEFAULT;
+				LOG("gevgen_bdx", pDEBUG) << "Set to DEFAULT: " << gOptZmin;
 			} else {
-				LOG("gevgen_bdx", pDEBUG) << "No zmin was requested";
-				gOptZmin = 0;
-			} //-z
 
-			// debug flags
-			if (parser.OptionExists('d')) {
-				LOG("gevgen_bdx", pDEBUG) << "Reading debug flag value";
-				gOptDebug = parser.ArgAsInt('d');
-			} else {
-				LOG("gevgen_bdx", pDEBUG) << "Unspecified debug flags - Using default";
-				gOptDebug = 0;
-			} //-d
+				gOptZmin = parser.ArgAsDouble('z');
+				LOG("gevgen_dm_bdx", pDEBUG) << "Set to " << gOptZmin;
+			}
 
-		} // root geom && gnumi flux
+		} else {
+			LOG("gevgen_dm_bdx", pDEBUG) << "No zmin was requested";
+			gOptZmin = 0; //
+		} //-z
+
+		// debug flags
+		if (parser.OptionExists('d')) {
+			LOG("gevgen_dm_bdx", pDEBUG) << "Reading debug flag value";
+			gOptDebug = parser.ArgAsInt('d');
+		} else {
+			LOG("gevgen_dm_bdx", pDEBUG) << "Unspecified debug flags - Using default";
+			gOptDebug = 0;
+		} //-d
 
 	} // using root geom?
 
@@ -1016,7 +999,7 @@ void GetCommandLineArgs(int argc, char **argv) {
 				string::size_type open_bracket = tgt_with_wgt.find("[");
 				string::size_type close_bracket = tgt_with_wgt.find("]");
 				if (open_bracket == string::npos || close_bracket == string::npos) {
-					LOG("gevgen_bdx", pFATAL) << "You made an error in specifying the target mix";
+					LOG("gevgen_dm_bdx", pFATAL) << "You made an error in specifying the target mix";
 					PrintSyntax();
 					exit(1);
 				}
@@ -1026,7 +1009,7 @@ void GetCommandLineArgs(int argc, char **argv) {
 				string::size_type jend = close_bracket;
 				int pdg = atoi(tgt_with_wgt.substr(ibeg, iend - ibeg).c_str());
 				double wgt = atof(tgt_with_wgt.substr(jbeg, jend - jbeg).c_str());
-				LOG("gevgen_bdx", pDEBUG) << "Adding to target mix: pdg = " << pdg << ", wgt = " << wgt;
+				LOG("gevgen_dm_bdx", pDEBUG) << "Adding to target mix: pdg = " << pdg << ", wgt = " << wgt;
 				gOptTgtMix.insert(map<int, double>::value_type(pdg, wgt));
 
 			}    // tgtmix_iter
@@ -1037,17 +1020,17 @@ void GetCommandLineArgs(int argc, char **argv) {
 	// *** flux
 	//
 	if (parser.OptionExists('f')) {
-		LOG("gevgen_bdx", pDEBUG) << "Getting input flux";
+		LOG("gevgen_dm_bdx", pDEBUG) << "Getting input flux";
 		DetermineFluxDriver(parser.ArgAsString('f'));
 	} else {
-		LOG("gevgen_bdx", pFATAL) << "No flux info was specified - Exiting";
+		LOG("gevgen_dm_bdx", pFATAL) << "No flux info was specified - Exiting";
 		PrintSyntax();
 		exit(1);
 	}
 
 	/*Energy Range*/
 	if (parser.OptionExists('e')) {
-		LOG("gevgen_bdx", pINFO) << "Reading neutrino energy";
+		LOG("gevgen_dm_bdx", pINFO) << "Reading neutrino energy";
 		string nue = parser.ArgAsString('e');
 		double emin, emax;
 		// is it just a value or a range (comma separated set of values)
@@ -1058,106 +1041,54 @@ void GetCommandLineArgs(int argc, char **argv) {
 			if (nurange[0].length() > 0) {
 				emin = atof(nurange[0].c_str());
 				assert(emin > 0);
-				gOptNuEnergyMin = emin;
+				gOptDMEnergyMin = emin;
 			}
 			if (nurange[1].length() > 0) {
 				emax = atof(nurange[1].c_str());
 				assert(emax > 0);
-				gOptNuEnergyMax = emax;
+				gOptDMEnergyMax = emax;
 			}
 		} else {
-			LOG("gevgen_bdx", pERROR) << "Energy must be speficified as Emin,Emax always. If ignoring Emin: use ,Emax with empty string before comma. If ignoring Emax: use Emin, with empty string after command";
+			LOG("gevgen_dm_bdx", pERROR) << "Energy must be speficified as Emin,Emax always. If ignoring Emin: use ,Emax with empty string before comma. If ignoring Emax: use Emin, with empty string after command";
 			PrintSyntax();
 			exit(1);
 		}
 	}	//-e
 
-	/*Radius*/
-	if (parser.OptionExists(4)) {
-		LOG("gevgen_bdx", pINFO) << "Reading radius";
-		gOptRadiusMax = parser.ArgAsDouble('R');
-		if (gOptRadiusMax <= 0) gOptRadiusMax = -1;
-		LOG("gevgen_bdx", pINFO) << "Result: " << gOptRadiusMax;
-	}
-
 	// number of events to generate
 	if (parser.OptionExists('n')) {
-		LOG("gevgen_bdx", pDEBUG) << "Reading limit on number of events to generate";
+		LOG("gevgen_dm_bdx", pDEBUG) << "Reading limit on number of events to generate";
 		gOptNev = parser.ArgAsInt('n');
 	} else {
-		LOG("gevgen_bdx", pDEBUG) << "Will keep on generating events till the flux driver stops";
+		LOG("gevgen_dm_bdx", pDEBUG) << "Will keep on generating events till the flux driver stops";
 		gOptNev = -1;
 	} //-n
 
-	// statistics to generate in terms of EOT
-
-	if (parser.OptionExists('x')) {
-		LOG("gevgen_bdx", pDEBUG) << "Reading requested exposure in EOT";
-		gOptEOT = parser.ArgAsDouble('x');
-	} else {
-		LOG("gevgen_bdx", pDEBUG) << "No EOT exposure was requested";
-		gOptEOT = -1;
-	}
-
 	// event file prefix
 	if (parser.OptionExists('o')) {
-		LOG("gevgen_bdx", pDEBUG) << "Reading the event filename prefix";
+		LOG("gevgen_dm_bdx", pDEBUG) << "Reading the event filename prefix";
 		gOptEvFilePrefix = parser.ArgAsString('o');
 	} else {
-		LOG("gevgen_bdx", pDEBUG) << "Will set the default event filename prefix";
+		LOG("gevgen_dm_bdx", pDEBUG) << "Will set the default event filename prefix";
 		gOptEvFilePrefix = kDefOptEvFilePrefix;
 	} //-o
 
 	// random number seed
 	if (parser.OptionExists("seed")) {
-		LOG("gevgen_bdx", pINFO) << "Reading random number seed";
+		LOG("gevgen_dm_bdx", pINFO) << "Reading random number seed";
 		gOptRanSeed = parser.ArgAsLong("seed");
 	} else {
-		LOG("gevgen_bdx", pINFO) << "Unspecified random number seed - Using default";
+		LOG("gevgen_dm_bdx", pINFO) << "Unspecified random number seed - Using default";
 		gOptRanSeed = -1;
 	}
 
 	// input cross-section file
 	if (parser.OptionExists("cross-sections")) {
-		LOG("gevgen_bdx", pINFO) << "Reading cross-section file";
+		LOG("gevgen_dm_bdx", pINFO) << "Reading cross-section file";
 		gOptInpXSecFile = parser.ArgAsString("cross-sections");
 	} else {
-		LOG("gevgen_bdx", pINFO) << "Unspecified cross-section file";
+		LOG("gevgen_dm_bdx", pINFO) << "Unspecified cross-section file";
 		gOptInpXSecFile = "";
-	}
-
-	//
-	// >>> perform 'sanity' checks on command line arguments
-	//
-
-	// Tthe 'exposure' may be set either as:
-	// - a number of EOTs
-	// - a number of generated events
-	// Only one of those options can be set.
-
-	int nset = 0;
-	if (gOptEOT > 0) nset++;
-	if (gOptNev > 0) nset++;
-	if (nset == 0) {
-		LOG("gevgen_bdx", pFATAL) << "** You need to specify an exposure, " << "either via the -x or -n options";
-		PrintSyntax();
-		exit(1);
-	}
-	if (nset > 1) {
-		LOG("gevgen_bdx", pFATAL) << "You can not specify more than one of the -x or -n options";
-		PrintSyntax();
-		exit(1);
-	}
-
-	// If we don't use a detailed ROOT detector geometry (but just a target mix)
-	// then don't accept EOT as a way to control job statistics (not enough info
-	// is passed in the target mix to compute EOT & the calculation can be easily
-	// done offline)
-	if (!gOptUsingRootGeom) {
-		if (gOptEOT > 0) {
-			LOG("gevgen_bdx", pFATAL) << "You may not use the -e option without a detector geometry description";
-			exit(1);
-		}
 	}
 
 	//
@@ -1184,37 +1115,23 @@ void GetCommandLineArgs(int argc, char **argv) {
 	}
 
 	ostringstream fluxinfo;
-	if (gOptUsingHistFlux) {
-		fluxinfo << "Using histograms: ";
-		map<int, TH1D*>::const_iterator iter;
-		for (iter = gOptFluxHst.begin(); iter != gOptFluxHst.end(); ++iter) {
-			int pdg_code = iter->first;
-			TH1D *spectrum = iter->second;
-			TParticlePDG *p = pdglib->Find(pdg_code);
-			if (p) {
-				string name = p->GetName();
-				fluxinfo << "(" << name << ") -> " << spectrum->GetName() << " / ";
-			}  //p?
-		}
-	} else {
-		fluxinfo << "Using " << gOptFluxDriver << " flux driver- " << "file = " << gOptFluxFile << ", location = " << gOptDetectorLocation;
-	}
+	fluxinfo << "file = " << gOptFluxFile;
 
 	ostringstream exposure;
-	if (gOptEOT > 0) exposure << "Number of EOTs = " << gOptEOT;
 	if (gOptNev > 0) exposure << "Number of events = " << gOptNev;
 
-	LOG("gevgen_bdx", pNOTICE) << "\n\n" << utils::print::PrintFramedMesg("BDX expt. event generation job configuration");
+	LOG("gevgen_dm_bdx", pNOTICE) << "\n\n" << utils::print::PrintFramedMesg("NuMI expt. event generation job configuration");
 
-	LOG("gevgen_bdx", pNOTICE) << "\n - Run number: " << gOptRunNu << "\n - Random number seed: " << gOptRanSeed << "\n - Using cross-section file: " << gOptInpXSecFile << "\n - Flux     @ " << fluxinfo.str() << "\n - Geometry @ " << gminfo.str() << "\n - Exposure @ " << exposure.str();
+	LOG("gevgen_dm_bdx", pNOTICE) << "\n - Run number: " << gOptRunNu << "\n - Random number seed: " << gOptRanSeed << "\n - Using cross-section file: " << gOptInpXSecFile << "\n - Flux     @ " << fluxinfo.str() << "\n - Geometry @ " << gminfo.str() << "\n - Exposure @ " << exposure.str();
 
-	LOG("gevgen_bdx", pNOTICE) << *RunOpt::Instance();
+	LOG("gevgen_dm_bdx", pNOTICE) << *RunOpt::Instance();
 }
 //____________________________________________________________________________
 void PrintSyntax(void) {
-	LOG("gevgen_bdx", pFATAL) << "\n **Syntax**" << "\n gevgen_bdx [-h] [-r run#]" << "\n            -f flux -g geometry" << "\n            [-t top_volume_name_at_geom] [-m max_path_lengths_xml_file]" << "\n            [-L length_units_at_geom] [-D density_units_at_geom]" << "\n            [-n n_of_events] [-x exposure_in_EOTs]"
-			<< "\n            [-o output_event_file_prefix]" << "\n            [-F fid_cut_string] [-S nrays_scan]" << "\n            [-z zmin_start]" << "\n            [--seed random_number_seed]" << "\n             --cross-sections xml_file" << "\n            [--event-generator-list list_name]" << "\n            [--message-thresholds xml_file]"
-			<< "\n            [--unphysical-event-mask mask]" << "\n            [--event-record-print-level level]" << "\n            [--mc-job-status-refresh-rate  rate]" << "\n            [--cache-file root_file]" << "\n" << " Please also read the detailed documentation at " << "$GENIE/src/Apps/gBDXExptEvGen.cxx" << "\n";
+	LOG("gevgen_dm_bdx", pFATAL) << "\n **Syntax**" << "\n gevgen_lardm [-h] [-r run#]" << "\n            -f flux -g geometry -M dm_mass" << "\n            [-c zp_coupling] [-v med_ratio]" << "\n            [-t top_volume_name_at_geom] [-m max_path_lengths_xml_file]" << "\n            [-L length_units_at_geom] [-D density_units_at_geom]"
+			<< "\n            [-n n_of_events] " << "\n            [-o output_event_file_prefix]" << "\n            [-F fid_cut_string] [-S nrays_scan]" << "\n            [-z zmin_start]" << "\n            [--seed random_number_seed]" << "\n             --cross-sections xml_file" << "\n            [--event-generator-list list_name]"
+			<< "\n            [--message-thresholds xml_file]" << "\n            [--unphysical-event-mask mask]" << "\n            [--event-record-print-level level]" << "\n            [--mc-job-status-refresh-rate  rate]" << "\n            [--cache-file root_file]" << "\n" << " Please also read the detailed documentation at "
+			<< "$GENIE/src/Apps/gFNALExptEvGen.cxx" << "\n";
 }
 //____________________________________________________________________________
 void CreateFidSelection(string fidcut, GeomAnalyzerI *geom_driver) {
@@ -1246,11 +1163,11 @@ void CreateFidSelection(string fidcut, GeomAnalyzerI *geom_driver) {
 	///
 	geometry::ROOTGeomAnalyzer *rgeom = dynamic_cast<geometry::ROOTGeomAnalyzer*>(geom_driver);
 	if (!rgeom) {
-		LOG("gevgen_bdx", pWARN) << "Can not create GeomVolSelectorFiduction," << " geometry driver is not ROOTGeomAnalyzer";
+		LOG("gevgen_dm_bdx", pWARN) << "Can not create GeomVolSelectorFiduction," << " geometry driver is not ROOTGeomAnalyzer";
 		return;
 	}
 
-	LOG("gevgen_bdx", pNOTICE) << "-F " << fidcut;
+	LOG("gevgen_dm_bdx", pNOTICE) << "-F " << fidcut;
 
 	genie::geometry::GeomVolSelectorFiducial *fidsel = new genie::geometry::GeomVolSelectorFiducial();
 
@@ -1261,9 +1178,9 @@ void CreateFidSelection(string fidcut, GeomAnalyzerI *geom_driver) {
 
 	vector<string> strtok = genie::utils::str::Split(fidcut, ":");
 	if (strtok.size() != 2) {
-		LOG("gevgen_bdx", pWARN) << "Can not create GeomVolSelectorFiduction," << " no \":\" separating type from values.  nsplit=" << strtok.size();
+		LOG("gevgen_dm_bdx", pWARN) << "Can not create GeomVolSelectorFiduction," << " no \":\" separating type from values.  nsplit=" << strtok.size();
 		for (unsigned int i = 0; i < strtok.size(); ++i)
-			LOG("gevgen_bdx",pNOTICE) << "strtok[" << i << "] = \"" << strtok[i] << "\"";
+			LOG("gevgen_dm_bdx",pNOTICE) << "strtok[" << i << "] = \"" << strtok[i] << "\"";
 		return;
 	}
 
@@ -1294,13 +1211,13 @@ void CreateFidSelection(string fidcut, GeomAnalyzerI *geom_driver) {
 	if (stype.find("zcyl") != string::npos) {
 		// cylinder along z direction at (x0,y0) radius zmin zmax
 		if (nvals < 5)
-		LOG("gevgen_bdx", pFATAL) << "MakeZCylinder needs 5 values, not " << nvals << " fidcut=\"" << fidcut << "\"";
+		LOG("gevgen_dm_bdx", pFATAL) << "MakeZCylinder needs 5 values, not " << nvals << " fidcut=\"" << fidcut << "\"";
 		fidsel->MakeZCylinder(vals[0], vals[1], vals[2], vals[3], vals[4]);
 
 	} else if (stype.find("box") != string::npos) {
 		// box (xmin,ymin,zmin) (xmax,ymax,zmax)
 		if (nvals < 6)
-		LOG("gevgen_bdx", pFATAL) << "MakeBox needs 6 values, not " << nvals << " fidcut=\"" << fidcut << "\"";
+		LOG("gevgen_dm_bdx", pFATAL) << "MakeBox needs 6 values, not " << nvals << " fidcut=\"" << fidcut << "\"";
 		double xyzmin[3] = { vals[0], vals[1], vals[2] };
 		double xyzmax[3] = { vals[3], vals[4], vals[5] };
 		fidsel->MakeBox(xyzmin, xyzmax);
@@ -1308,29 +1225,29 @@ void CreateFidSelection(string fidcut, GeomAnalyzerI *geom_driver) {
 	} else if (stype.find("zpoly") != string::npos) {
 		// polygon along z direction nfaces at (x0,y0) radius phi zmin zmax
 		if (nvals < 7)
-		LOG("gevgen_bdx", pFATAL) << "MakeZPolygon needs 7 values, not " << nvals << " fidcut=\"" << fidcut << "\"";
+		LOG("gevgen_dm_bdx", pFATAL) << "MakeZPolygon needs 7 values, not " << nvals << " fidcut=\"" << fidcut << "\"";
 		int nfaces = (int) vals[0];
 		if (nfaces < 3)
-		LOG("gevgen_bdx", pFATAL) << "MakeZPolygon needs nfaces>=3, not " << nfaces << " fidcut=\"" << fidcut << "\"";
+		LOG("gevgen_dm_bdx", pFATAL) << "MakeZPolygon needs nfaces>=3, not " << nfaces << " fidcut=\"" << fidcut << "\"";
 		fidsel->MakeZPolygon(nfaces, vals[1], vals[2], vals[3], vals[4], vals[5], vals[6]);
 
 	} else if (stype.find("sphere") != string::npos) {
 		// sphere at (x0,y0,z0) radius
 		if (nvals < 4)
-		LOG("gevgen_bdx", pFATAL) << "MakeZSphere needs 4 values, not " << nvals << " fidcut=\"" << fidcut << "\"";
+		LOG("gevgen_dm_bdx", pFATAL) << "MakeZSphere needs 4 values, not " << nvals << " fidcut=\"" << fidcut << "\"";
 		fidsel->MakeSphere(vals[0], vals[1], vals[2], vals[3]);
 
 	} else {
-		LOG("gevgen_bdx", pFATAL) << "Can not create GeomVolSelectorFiduction for shape \"" << stype << "\"";
+		LOG("gevgen_dm_bdx", pFATAL) << "Can not create GeomVolSelectorFiduction for shape \"" << stype << "\"";
 	}
 
 	if (master) {
 		fidsel->ConvertShapeMaster2Top(rgeom);
-		LOG("gevgen_bdx", pNOTICE) << "Convert fiducial volume from master to topvol coords";
+		LOG("gevgen_dm_bdx", pNOTICE) << "Convert fiducial volume from master to topvol coords";
 	}
 	if (reverse) {
 		fidsel->SetReverseFiducial(true);
-		LOG("gevgen_bdx", pNOTICE) << "Reverse sense of fiducial volume cut";
+		LOG("gevgen_dm_bdx", pNOTICE) << "Reverse sense of fiducial volume cut";
 	}
 	rgeom->AdoptGeomVolSelector(fidsel);
 
@@ -1346,20 +1263,20 @@ void CreateRockBoxSelection(string fidcut, GeomAnalyzerI *geom_driver) {
 
 	genie::geometry::ROOTGeomAnalyzer *rgeom = dynamic_cast<genie::geometry::ROOTGeomAnalyzer*>(geom_driver);
 	if (!rgeom) {
-		LOG("gevgen_bdx", pWARN) << "Can not create GeomVolSelectorRockBox," << " geometry driver is not ROOTGeomAnalyzer";
+		LOG("gevgen_numi", pWARN) << "Can not create GeomVolSelectorRockBox," << " geometry driver is not ROOTGeomAnalyzer";
 		return;
 	}
 
-	LOG("gevgen_bdx", pWARN) << "fiducial (rock) cut: " << fidcut;
+	LOG("gevgen_numi", pWARN) << "fiducial (rock) cut: " << fidcut;
 
 	// for now, only fiducial no "rock box"
 	genie::geometry::GeomVolSelectorRockBox *rocksel = new genie::geometry::GeomVolSelectorRockBox();
 
 	vector<string> strtok = genie::utils::str::Split(fidcut, ":");
 	if (strtok.size() != 2) {
-		LOG("gevgen_bdx", pWARN) << "Can not create GeomVolSelectorRockBox," << " no \":\" separating type from values.  nsplit=" << strtok.size();
+		LOG("gevgen_numi", pWARN) << "Can not create GeomVolSelectorRockBox," << " no \":\" separating type from values.  nsplit=" << strtok.size();
 		for (unsigned int i = 0; i < strtok.size(); ++i)
-			LOG("gevgen_bdx", pWARN) << "strtok[" << i << "] = \"" << strtok[i] << "\"";
+			LOG("gevgen_numi", pWARN) << "strtok[" << i << "] = \"" << strtok[i] << "\"";
 		return;
 	}
 
@@ -1373,7 +1290,7 @@ void CreateRockBoxSelection(string fidcut, GeomAnalyzerI *geom_driver) {
 		const string &valstr1 = *iter;
 		if (valstr1 != "") {
 			double aval = atof(valstr1.c_str());
-			LOG("gevgen_bdx", pWARN) << "rock value [" << vals.size() << "] " << aval;
+			LOG("gevgen_numi", pWARN) << "rock value [" << vals.size() << "] " << aval;
 			vals.push_back(aval);
 		}
 	}
@@ -1389,7 +1306,7 @@ void CreateRockBoxSelection(string fidcut, GeomAnalyzerI *geom_driver) {
 	rgeom->SetTopVolName(gOptRootGeomMasterVol);
 
 	if (nvals < 6) {
-		LOG("gevgen_bdx", pFATAL) << "rockbox needs at " << "least 6 values, found " << nvals << "in \"" << strtok[1] << "\"";
+		LOG("gevgen_numi", pFATAL) << "rockbox needs at " << "least 6 values, found " << nvals << "in \"" << strtok[1] << "\"";
 		exit(1);
 
 	}
@@ -1423,6 +1340,7 @@ void CreateRockBoxSelection(string fidcut, GeomAnalyzerI *geom_driver) {
 	rgeom->AdoptGeomVolSelector(rocksel);
 
 }
+//____________________________________________________________________________
 
 //____________________________________________________________________________
 void DetermineFluxDriver(string fopt) {
@@ -1431,8 +1349,8 @@ void DetermineFluxDriver(string fopt) {
 
 	//For the moment, this is the only flux driver supported
 	if (gOptUsingRootGeom) {
-		gOptFluxDriver = "genie::flux::GBDXpipesHistoFlux";
-		ParseFluxHst3D(fopt);
+		gOptFluxDriver = "genie::flux::GBDXpipesHistoFlux_DM";
+		ParseFluxHst2D(fopt);
 	} else {
 		gOptFluxDriver = "genie::flux::GCylindTH1Flux";
 		ParseFluxHst(fopt);
@@ -1440,10 +1358,11 @@ void DetermineFluxDriver(string fopt) {
 
 	gOptUsingHistFlux = true;
 }
+
 //____________________________________________________________________________
-void ParseFluxHst3D(string flux) {
+void ParseFluxHst2D(string flux) {
 	// Using flux from histograms
-	// Extract the root file name & the list of histogram names & neutrino
+	// Extract the root file name & the list of histogram names & DM
 	// species (specified as 'filename,histo1[species1],histo2[species2],...')
 	// See documentation on top section of this file.
 	//
@@ -1466,43 +1385,37 @@ void ParseFluxHst3D(string flux) {
 	TFile flux_file(gOptFluxFile.c_str(), "read");
 	if (fluxv[1] == "DEFAULT") {
 		string histo;
-		LOG("gevgen_bdx", pNOTICE) << "Using DEFAULT naming scheme in ParseFluxHst3D";
+		LOG("gevgen_dm_bdx", pNOTICE) << "Using DEFAULT naming scheme in ParseFluxHst2D";
 		for (unsigned int inu = 2; inu < fluxv.size(); inu++) {
 			// convert neutrino name -> pdg code
 			int pdg = atoi(fluxv[inu].c_str());
-			if (!pdg::IsNeutrino(pdg) && !pdg::IsAntiNeutrino(pdg)) {
-				LOG("gevgen_bdx", pFATAL) << "Unknown neutrino type: " << fluxv[inu];
+			if ((pdg != kPdgDarkMatter) && (pdg != kPdgAntiDarkMatter)) {
+				LOG("gevgen_bdx", pFATAL) << "Unknown DM type: " << fluxv[inu];
 				PrintSyntax();
 				exit(1);
 			}
 			switch (pdg) {
-			case 12: //nue
-				histo = "hNuESpectrum";
+			case kPdgDarkMatter:
+				histo = "hChiSpectrum";
 				break;
-			case -12:
-				histo = "hNuEBarSpectrum";
-				break;
-			case 14:
-				histo = "hNuMuSpectrum";
-				break;
-			case -14:
-				histo = "hNuMuSpectrum";
+			case kPdgAntiDarkMatter:
+				histo = "hChiBarSpectrum";
 				break;
 			default:
-				LOG("gevgen_bdx", pFATAL) << "UNSUPPORTED neutrino type: " << fluxv[inu];
+				LOG("gevgen_dm_bdx", pFATAL) << "UNSUPPORTED neutrino type: " << fluxv[inu];
 				exit(1);
 				break;
 			}
 			TH1D *ihst = (TH1D*) flux_file.Get(histo.c_str());
-			TH3D *ihst3D = (TH3D*) flux_file.Get((histo + "3D").c_str());
+			TH2D *ihst2D = (TH2D*) flux_file.Get((histo + "2D").c_str());
 			if (!ihst) {
 				LOG("gevgen_bdx", pFATAL) << "Can not find histogram: " << histo << " in flux file: " << gOptFluxFile;
 				PrintSyntax();
 				exit(1);
 			}
 
-			if (!ihst3D) {
-				LOG("gevgen_bdx", pFATAL) << "Can not find 3D histogram: " << (histo + "3D") << " in flux file: " << gOptFluxFile;
+			if (!ihst2D) {
+				LOG("gevgen_bdx", pFATAL) << "Can not find 2D histogram: " << (histo + "2D") << " in flux file: " << gOptFluxFile;
 				PrintSyntax();
 				exit(1);
 			}
@@ -1513,15 +1426,15 @@ void ParseFluxHst3D(string flux) {
 			spectrum->SetTitle(histo.c_str());
 			spectrum->SetDirectory(0);
 
-			TH3D *spectrum3D = (TH3D*) ihst3D->Clone();
-			spectrum3D->SetName((histo + "3D").c_str());
-			spectrum3D->SetTitle((histo + "3D").c_str());
-			spectrum3D->SetDirectory(0);
+			TH2D *spectrum2D = (TH2D*) ihst2D->Clone();
+			spectrum2D->SetName((histo + "2D").c_str());
+			spectrum2D->SetTitle((histo + "2D").c_str());
+			spectrum2D->SetDirectory(0);
 
 			// store flux neutrino code / energy spectrum
-			LOG("gevgen_bdx", pDEBUG) << "Adding energy spectrum for flux neutrino: pdg = " << pdg;
+			LOG("gevgen_dm_bdx", pDEBUG) << "Adding energy spectrum for flux DM: pdg = " << pdg;
 			gOptFluxHst.insert(map<int, TH1D*>::value_type(pdg, spectrum));
-			gOptFluxHst3D.insert(map<int, TH3D*>::value_type(pdg, spectrum3D));
+			gOptFluxHst2D.insert(map<int, TH2D*>::value_type(pdg, spectrum2D));
 		}
 	} else {
 		for (unsigned int inu = 1; inu < fluxv.size(); inu++) {
@@ -1541,15 +1454,15 @@ void ParseFluxHst3D(string flux) {
 			string histo = nutype_and_histo.substr(jbeg, jend - jbeg);
 			// access specified histogram from the input root file
 			TH1D *ihst = (TH1D*) flux_file.Get(histo.c_str());
-			TH3D *ihst3D = (TH3D*) flux_file.Get((histo + "3D").c_str());
+			TH2D *ihst2D = (TH2D*) flux_file.Get((histo + "2D").c_str());
 			if (!ihst) {
-				LOG("gevgen_bdx", pFATAL) << "Can not find histogram: " << histo << " in flux file: " << gOptFluxFile;
+				LOG("gevgen_dm_bdx", pFATAL) << "Can not find histogram: " << histo << " in flux file: " << gOptFluxFile;
 				PrintSyntax();
 				exit(1);
 			}
 
-			if (!ihst3D) {
-				LOG("gevgen_bdx", pFATAL) << "Can not find 3D histogram: " << (histo + "3D") << " in flux file: " << gOptFluxFile;
+			if (!ihst2D) {
+				LOG("gevgen_dm_bdx", pFATAL) << "Can not find 2D histogram: " << (histo + "2D") << " in flux file: " << gOptFluxFile;
 				PrintSyntax();
 				exit(1);
 			}
@@ -1560,34 +1473,32 @@ void ParseFluxHst3D(string flux) {
 			spectrum->SetTitle(histo.c_str());
 			spectrum->SetDirectory(0);
 
-			TH3D *spectrum3D = (TH3D*) ihst3D->Clone();
-			spectrum3D->SetName((histo + "3D").c_str());
-			spectrum3D->SetTitle((histo + "3D").c_str());
-			spectrum3D->SetDirectory(0);
+			TH2D *spectrum2D = (TH2D*) ihst2D->Clone();
+			spectrum2D->SetName((histo + "2D").c_str());
+			spectrum2D->SetTitle((histo + "2D").c_str());
+			spectrum2D->SetDirectory(0);
 
 			// convert neutrino name -> pdg code
 			int pdg = atoi(nutype.c_str());
-			if (!pdg::IsNeutrino(pdg) && !pdg::IsAntiNeutrino(pdg)) {
-				LOG("gevgen_bdx", pFATAL) << "Unknown neutrino type: " << nutype;
+			if ((pdg != kPdgDarkMatter) && (pdg != kPdgAntiDarkMatter)) {
+				LOG("gevgen_bdx", pFATAL) << "Unknown DM type: " << nutype;
 				PrintSyntax();
 				exit(1);
 			}
 			// store flux neutrino code / energy spectrum
-			LOG("gevgen_bdx", pDEBUG) << "Adding energy spectrum for flux neutrino: pdg = " << pdg;
+			LOG("gevgen_dm_bdx", pDEBUG) << "Adding energy spectrum for flux DM: pdg = " << pdg;
 			gOptFluxHst.insert(map<int, TH1D*>::value_type(pdg, spectrum));
-			gOptFluxHst3D.insert(map<int, TH3D*>::value_type(pdg, spectrum3D));
+			gOptFluxHst2D.insert(map<int, TH2D*>::value_type(pdg, spectrum2D));
 		}  //inu
 	}
 	if (gOptFluxHst.size() < 1) {
-		LOG("gevgen_bdx", pFATAL) << "You have not specified any flux histogram!";
+		LOG("gevgen_dm_bdx", pFATAL) << "You have not specified any flux histogram!";
 		PrintSyntax();
 		exit(1);
 	}
 
 	flux_file.Close();
 }
-
-//____________________________________________________________________________
 
 //____________________________________________________________________________
 void ParseFluxHst(string flux) {
@@ -1615,37 +1526,31 @@ void ParseFluxHst(string flux) {
 	TFile flux_file(gOptFluxFile.c_str(), "read");
 	if (fluxv[1] == "DEFAULT") {
 		string histo;
-		LOG("gevgen_bdx", pNOTICE) << "Using DEFAULT naming scheme in ParseFluxHst3D";
+		LOG("gevgen_dm_bdx", pNOTICE) << "Using DEFAULT naming scheme in ParseFluxHst";
 		for (unsigned int inu = 2; inu < fluxv.size(); inu++) {
-			// convert neutrino name -> pdg code
+			// convert DM name -> pdg code
 			int pdg = atoi(fluxv[inu].c_str());
-			if (!pdg::IsNeutrino(pdg) && !pdg::IsAntiNeutrino(pdg)) {
-				LOG("gevgen_bdx", pFATAL) << "Unknown neutrino type: " << fluxv[inu];
+			if ((pdg != kPdgDarkMatter) && (pdg != kPdgAntiDarkMatter)){
+				LOG("gevgen_bdx", pFATAL) << "Unknown DM type: " << fluxv[inu];
 				PrintSyntax();
 				exit(1);
 			}
 			switch (pdg) {
-			case 12: //nue
-				histo = "hNuESpectrum";
+			case kPdgDarkMatter: //chi
+				histo = "hChiSpectrum";
 				break;
-			case -12:
-				histo = "hNuEBarSpectrum";
-				break;
-			case 14:
-				histo = "hNuMuSpectrum";
-				break;
-			case -14:
-				histo = "hNuMuSpectrum";
+			case kPdgAntiDarkMatter:
+				histo = "hChiBarSpectrum";
 				break;
 			default:
-				LOG("gevgen_bdx", pFATAL) << "UNSUPPORTED neutrino type: " << fluxv[inu];
+				LOG("gevgen_dm_bdx", pFATAL) << "UNSUPPORTED DM type: " << fluxv[inu];
 				exit(1);
 				break;
 			}
 			TH1D *ihst = (TH1D*) flux_file.Get(histo.c_str());
 
 			if (!ihst) {
-				LOG("gevgen_bdx", pFATAL) << "Can not find histogram: " << histo << " in flux file: " << gOptFluxFile;
+				LOG("gevgen_dm_bdx", pFATAL) << "Can not find histogram: " << histo << " in flux file: " << gOptFluxFile;
 				PrintSyntax();
 				exit(1);
 			}
@@ -1656,7 +1561,7 @@ void ParseFluxHst(string flux) {
 			spectrum->SetTitle((histo).c_str());
 			spectrum->SetDirectory(0);
 			// store flux neutrino code / energy spectrum
-			LOG("gevgen_bdx", pDEBUG) << "Adding energy spectrum for flux neutrino: pdg = " << pdg;
+			LOG("gevgen_dm_bdx", pDEBUG) << "Adding energy spectrum for flux neutrino: pdg = " << pdg;
 			gOptFluxHst.insert(map<int, TH1D*>::value_type(pdg, spectrum));
 		}
 	}
@@ -1680,7 +1585,7 @@ void ParseFluxHst(string flux) {
 			// access specified histogram from the input root file
 			TH1D *ihst = (TH1D*) flux_file.Get(histo.c_str());
 			if (!ihst) {
-				LOG("gevgen_bdx", pFATAL) << "Can not find histogram: " << histo << " in flux file: " << gOptFluxFile;
+				LOG("gevgen_dm_bdx", pFATAL) << "Can not find histogram: " << histo << " in flux file: " << gOptFluxFile;
 				PrintSyntax();
 				exit(1);
 			}
@@ -1693,18 +1598,18 @@ void ParseFluxHst(string flux) {
 
 			// convert neutrino name -> pdg code
 			int pdg = atoi(nutype.c_str());
-			if (!pdg::IsNeutrino(pdg) && !pdg::IsAntiNeutrino(pdg)) {
-				LOG("gevgen_bdx", pFATAL) << "Unknown neutrino type: " << nutype;
+			if ((pdg != kPdgDarkMatter) && (pdg != kPdgAntiDarkMatter)) {
+				LOG("gevgen_dm_bdx", pFATAL) << "Unknown DM type: " << nutype;
 				PrintSyntax();
 				exit(1);
 			}
 			// store flux neutrino code / energy spectrum
-			LOG("gevgen_bdx", pDEBUG) << "Adding energy spectrum for flux neutrino: pdg = " << pdg;
+			LOG("gevgen_dm_bdx", pDEBUG) << "Adding energy spectrum for flux DM: pdg = " << pdg;
 			gOptFluxHst.insert(map<int, TH1D*>::value_type(pdg, spectrum));
 		}  //inu
 	}
 	if (gOptFluxHst.size() < 1) {
-		LOG("gevgen_bdx", pFATAL) << "You have not specified any flux histogram!";
+		LOG("gevgen_dm_bdx", pFATAL) << "You have not specified any flux histogram!";
 		PrintSyntax();
 		exit(1);
 	}

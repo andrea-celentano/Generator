@@ -67,6 +67,7 @@ TGT_BASE += gevgen_nnbarosc
 endif
 ifeq ($(strip $(GOPT_ENABLE_BOOSTED_DARK_MATTER)),YES)
 TGT_BASE += gevgen_dm
+TGT_BASE += gevgen_dm_bdx
 TGT_BASE += gmkspl_dm
 TGT_BASE += gevgen_lardm
 endif
@@ -159,6 +160,13 @@ $(GENIE_BIN_PATH)/gevgen_nnbarosc: gNNBarOscEvGen.o $(call find_libs,gevgen_nnba
 $(GENIE_BIN_PATH)/gevgen_dm: gEvGenDM.o $(call find_libs,gevgen_dm)
 	@echo "** Building gevgen_dm"
 	$(LD) $(LDFLAGS) gEvGenDM.o $(LIBRARIES) -o $(GENIE_BIN_PATH)/gevgen_dm
+
+#BDX DM app
+$(GENIE_BIN_PATH)/gevgen_dm_bdx: gBDXExptEvGenDM.o $(call find_libs,gevgen_dm_bdxl)
+	@echo "** Building gevgen_dm_bdx"
+	$(LD) $(LDFLAGS) gBDXExptEvGenDM.o $(LIBRARIES) -o $(GENIE_BIN_PATH)/gevgen_dm_bdx
+	
+
 
 # gevdump event print-out utility
 #
